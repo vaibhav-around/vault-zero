@@ -180,13 +180,28 @@ export default function LandingPage() {
           Hackathon.
         </div>
         <div className="flex flex-wrap justify-center gap-4">
-          <a href="#" className="hover:text-zinc-400 transition-colors">
+          <a
+            href="https://docs.midnight.network"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-zinc-400 transition-colors"
+          >
             Midnight Docs
           </a>
-          <a href="#" className="hover:text-zinc-400 transition-colors">
+          <a
+            href="https://midnight.network/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-zinc-400 transition-colors"
+          >
             Privacy Policy
           </a>
-          <a href="#" className="hover:text-zinc-400 transition-colors">
+          <a
+            href="https://github.com/vaibhav-around/vault-zero"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-zinc-400 transition-colors"
+          >
             Github
           </a>
         </div>

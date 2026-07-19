@@ -1,0 +1,48 @@
+pragma language_version >= 0.22;
+
+import CompactStandardLibrary;
+
+export enum State { VACANT, OCCUPIED }
+
+export ledger state: State;
+export ledger message: Maybe<Opaque<"string">>;
+export ledger sequence: Counter;
+export ledger owner: Bytes<32>;
+
+witness localSecretKey(): Bytes<32>;
+
+constructor() {
+  state = State.VACANT;
+  message = none<Opaque<"string">>();
+  sequence.increment(1);
+}
+
+export circuit post(newMessage: Opaque<"string">): [] {
+  assert(state == State.VACANT, "Board is occupied");
+  
+  // Sequence counter prevents replay attacks (re-registering with the same secret key)
+  const currentSeq = sequence as Field as Bytes<32>;
+  owner = disclose(publicKey(localSecretKey(), currentSeq));
+  
+  message = disclose(some<Opaque<"string">>(newMessage));
+  state = State.OCCUPIED;
+}
+
+export circuit takeDown(): Opaque<"string"> {
+  assert(state == State.OCCUPIED, "Board is already vacant");
+  
+  // Prove that the caller knows the private key used to lock this message
+  const currentSeq = sequence as Field as Bytes<32>;
+  assert(owner == publicKey(localSecretKey(), currentSeq), "Not the owner");
+  
+  const msg = message.value;
+  state = State.VACANT;
+  sequence.increment(1); // Increment sequence to invalidate previous signature public key
+  message = none<Opaque<"string">>();
+  return msg;
+}
+
+pure circuit publicKey(sk: Bytes<32>, seq: Bytes<32>): Bytes<32> {
+  // Use persistentHash with a clear domain separator to derive the public key
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "bboard:pk:v1:"), seq, sk]);
+}

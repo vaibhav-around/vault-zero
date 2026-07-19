@@ -1,0 +1,12 @@
+{
+  "name": "@board/contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compact": "wsl ~/.local/bin/compact compile src/board.compact src/managed/board"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0"
+  }
+}

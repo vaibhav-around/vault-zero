@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { deriveKey, encryptData, decryptData, arrayBufferToBase64 } from '../lib/crypto';
+import { deriveKey, encryptData, decryptData } from '../lib/crypto';
 import { midnightService, WalletInfo, TransactionInfo } from '../lib/midnight';
 
 export interface CredentialItem {
@@ -35,6 +35,7 @@ interface VaultState {
   searchQuery: string;
   selectedCategory: string;
   showFavoritesOnly: boolean;
+  theme: 'dark' | 'light';
 
   // Actions
   connectWallet: (forceSimulate?: boolean) => Promise<void>;
@@ -53,6 +54,7 @@ interface VaultState {
   setSearchQuery: (query: string) => void;
   setSelectedCategory: (category: string) => void;
   setShowFavoritesOnly: (show: boolean) => void;
+  setTheme: (theme: 'dark' | 'light') => void;
   syncTransactionHistory: () => void;
 }
 
@@ -63,6 +65,26 @@ async function computeHash(text: string): Promise<string> {
   const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Helper to save encrypted vault
+function saveEncryptedVault(address: string, data: { ciphertext: string; iv: string }) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(`vaultzero_vault_${address}`, JSON.stringify(data));
+  }
+}
+
+// Helper to load encrypted vault
+function loadEncryptedVault(address: string): { ciphertext: string; iv: string } | null {
+  if (typeof window === 'undefined') return null;
+  const storedVault = localStorage.getItem(`vaultzero_vault_${address}`);
+  if (!storedVault) return null;
+  try {
+    return JSON.parse(storedVault);
+  } catch (err) {
+    console.error('Failed to parse stored vault data', err);
+    return null;
+  }
 }
 
 export const useVaultStore = create<VaultState>((set, get) => ({
@@ -78,6 +100,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   searchQuery: '',
   selectedCategory: 'All',
   showFavoritesOnly: false,
+  theme: typeof window !== 'undefined' ? (localStorage.getItem('vaultzero_theme') as 'dark' | 'light') || 'dark' : 'dark',
 
   connectWallet: async (forceSimulate = false) => {
     set({ isConnecting: true });
@@ -132,13 +155,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     // Step 2: Derive AES key from signature
     const key = await deriveKey(signature);
     
-    // Step 3: Check if we have encrypted vault data in localStorage
-    const storedVault = localStorage.getItem(`vaultzero_vault_${walletInfo.address}`);
+    // Step 3: Check if we have encrypted vault data
+    const storedVault = loadEncryptedVault(walletInfo.address);
     let items: CredentialItem[] = [];
     
     if (storedVault) {
       try {
-        const { ciphertext, iv } = JSON.parse(storedVault);
+        const { ciphertext, iv } = storedVault;
         const decryptedJson = await decryptData(ciphertext, iv, key);
         items = JSON.parse(decryptedJson);
       } catch (err) {
@@ -172,8 +195,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const itemsJson = JSON.stringify(updatedItems);
     const encrypted = await encryptData(itemsJson, cryptoKey);
     
-    // Store locally
-    localStorage.setItem(`vaultzero_vault_${walletInfo.address}`, JSON.stringify(encrypted));
+    // Store locally via helper
+    saveEncryptedVault(walletInfo.address, encrypted);
     
     set({ decryptedItems: updatedItems });
 
@@ -209,8 +232,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const itemsJson = JSON.stringify(updatedItems);
     const encrypted = await encryptData(itemsJson, cryptoKey);
     
-    // Store locally
-    localStorage.setItem(`vaultzero_vault_${walletInfo.address}`, JSON.stringify(encrypted));
+    // Store locally via helper
+    saveEncryptedVault(walletInfo.address, encrypted);
     
     set({ decryptedItems: updatedItems });
 
@@ -237,8 +260,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const itemsJson = JSON.stringify(updatedItems);
     const encrypted = await encryptData(itemsJson, cryptoKey);
     
-    // Store locally
-    localStorage.setItem(`vaultzero_vault_${walletInfo.address}`, JSON.stringify(encrypted));
+    // Store locally via helper
+    saveEncryptedVault(walletInfo.address, encrypted);
     
     set({ decryptedItems: updatedItems });
 
@@ -258,11 +281,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   exportVault: () => {
     const { walletInfo } = get();
     if (!walletInfo) return null;
-    
-    const storedVault = localStorage.getItem(`vaultzero_vault_${walletInfo.address}`);
-    if (!storedVault) return null;
-    
-    return JSON.parse(storedVault);
+    return loadEncryptedVault(walletInfo.address);
   },
 
   importVault: async (ciphertext, iv) => {
@@ -278,11 +297,8 @@ export const useVaultStore = create<VaultState>((set, get) => ({
         throw new Error('Invalid vault file format');
       }
 
-      // Store locally
-      localStorage.setItem(
-        `vaultzero_vault_${walletInfo.address}`,
-        JSON.stringify({ ciphertext, iv })
-      );
+      // Store locally via helper
+      saveEncryptedVault(walletInfo.address, { ciphertext, iv });
 
       set({ decryptedItems: items });
 
@@ -308,7 +324,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
     // Store empty array encrypted
     const encrypted = await encryptData(JSON.stringify([]), cryptoKey);
-    localStorage.setItem(`vaultzero_vault_${walletInfo.address}`, JSON.stringify(encrypted));
+    saveEncryptedVault(walletInfo.address, encrypted);
 
     set({ decryptedItems: [] });
 
@@ -329,6 +345,17 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   setShowFavoritesOnly: (show) => set({ showFavoritesOnly: show }),
+  setTheme: (theme) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vaultzero_theme', theme);
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+      } else {
+        document.documentElement.classList.remove('light-theme');
+      }
+    }
+    set({ theme });
+  },
   syncTransactionHistory: () => {
     set({ txHistory: midnightService.getTransactionHistory() });
   }

@@ -4,7 +4,6 @@ import React from 'react';
 import { toast } from 'sonner';
 import { 
   Wallet, 
-  KeyRound, 
   History, 
   Coins, 
   Network, 
@@ -13,8 +12,7 @@ import {
   Loader2,
   Trash2,
   ExternalLink,
-  ShieldCheck,
-  TrendingDown
+  ShieldCheck
 } from 'lucide-react';
 import { useVaultStore } from '../store/vaultStore';
 import { midnightService } from '../lib/midnight';
@@ -117,7 +115,7 @@ export default function ProfileView() {
               <span>Midnight ZK Privacy</span>
             </h3>
             <p className="text-xs leading-relaxed text-zinc-400">
-              VaultZero uses Midnight's Compact smart contract framework to publish state transitions. 
+              VaultZero uses Midnight&apos;s Compact smart contract framework to publish state transitions. 
             </p>
             <p className="text-xs leading-relaxed text-zinc-500">
               Instead of placing your passwords on-chain, we calculate a zero-knowledge cryptographic signature of your locally encrypted vault. Only this proof hash is anchored on the ledger, ensuring immutable timestamp records of your vault updates while keeping credentials completely invisible to nodes.

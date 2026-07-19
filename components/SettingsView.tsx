@@ -8,18 +8,14 @@ import {
   Trash2, 
   Sun, 
   Moon, 
-  AlertTriangle, 
-  Check, 
-  FileJson,
-  Lock
+  AlertTriangle
 } from 'lucide-react';
 import { useVaultStore } from '../store/vaultStore';
 
 export default function SettingsView() {
-  const { exportVault, importVault, clearVault, walletInfo } = useVaultStore();
+  const { exportVault, importVault, clearVault, walletInfo, theme, setTheme } = useVaultStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
 
   const handleExport = () => {
@@ -104,8 +100,9 @@ export default function SettingsView() {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-    toast.success(`Theme switched to ${theme === 'dark' ? 'Light' : 'Dark'} Mode (Simulated)`);
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    toast.success(`Theme switched to ${nextTheme === 'dark' ? 'Midnight Dark' : 'Cyber Light'} Mode`);
   };
 
   return (

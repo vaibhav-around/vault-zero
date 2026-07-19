@@ -5,13 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck,
   Lock,
-  ChevronRight,
   Info,
   Key,
   Cpu,
   Database,
   ArrowRight,
-  Globe,
 } from "lucide-react";
 import { useVaultStore } from "../store/vaultStore";
 

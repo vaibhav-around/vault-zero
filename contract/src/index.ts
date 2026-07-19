@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import { sampleSigningKey, ContractState } from '@midnight-ntwrk/compact-runtime';
 

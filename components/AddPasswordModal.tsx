@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { z } from 'zod';
 import { X, Eye, EyeOff, Sparkles, Star } from 'lucide-react';
@@ -40,8 +40,13 @@ export default function AddPasswordModal({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Reset fields or load edit item
-  useEffect(() => {
+  const [prevEditId, setPrevEditId] = useState<string | null | undefined>(undefined);
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+
+  // Sync state when modal opens or edit item changes
+  if (isOpen !== prevIsOpen || editItemId !== prevEditId) {
+    setPrevIsOpen(isOpen);
+    setPrevEditId(editItemId);
     if (isOpen) {
       if (editItemId) {
         const item = decryptedItems.find((i) => i.id === editItemId);
@@ -66,7 +71,7 @@ export default function AddPasswordModal({
       setErrors({});
       setShowPassword(false);
     }
-  }, [isOpen, editItemId, decryptedItems]);
+  }
 
   const generateRandomPassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';

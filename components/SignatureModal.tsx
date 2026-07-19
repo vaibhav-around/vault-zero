@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Loader2, KeyRound } from 'lucide-react';
+import { Loader2, KeyRound } from 'lucide-react';
 
 interface SignatureModalProps {
   isOpen: boolean;
@@ -32,20 +32,19 @@ export default function SignatureModal({
     if (isProving) {
       interval = setInterval(() => {
         setProvingStep((prev) => {
-          if (prev >= steps.length - 1) {
+          if (prev >= 3) {
             clearInterval(interval);
             return prev;
           }
           return prev + 1;
         });
       }, 700);
-    } else {
-      setProvingStep(0);
     }
     return () => clearInterval(interval);
   }, [isProving]);
 
   const handleApprove = async () => {
+    setProvingStep(0);
     setIsProving(true);
     try {
       await onApprove();

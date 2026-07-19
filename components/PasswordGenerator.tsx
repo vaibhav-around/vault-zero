@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { Copy, RefreshCw, Check, ShieldAlert, Shield, ShieldCheck } from 'lucide-react';
+import { Copy, RefreshCw, ShieldAlert, Shield, ShieldCheck } from 'lucide-react';
 
 export default function PasswordGenerator() {
   const [length, setLength] = useState(16);
@@ -10,59 +10,73 @@ export default function PasswordGenerator() {
   const [includeLowercase, setIncludeLowercase] = useState(true);
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const [includeSymbols, setIncludeSymbols] = useState(true);
-  
-  const [password, setPassword] = useState('');
-  const [strength, setStrength] = useState<{ score: number; label: string; color: string; desc: string }>({
-    score: 0,
-    label: 'Weak',
-    color: 'bg-rose-500',
-    desc: 'Select more options or increase length.',
+
+  const generatePasswordFromOptions = useCallback(
+    (len: number, upper: boolean, lower: boolean, nums: boolean, syms: boolean) => {
+      let charSet = '';
+      if (upper) charSet += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      if (lower) charSet += 'abcdefghijklmnopqrstuvwxyz';
+      if (nums) charSet += '0123456789';
+      if (syms) charSet += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+
+      if (!charSet) return '';
+
+      let generated = '';
+      for (let i = 0; i < len; i++) {
+        generated += charSet.charAt(Math.floor(Math.random() * charSet.length));
+      }
+      return generated;
+    },
+    []
+  );
+
+  const [password, setPassword] = useState(() =>
+    generatePasswordFromOptions(16, true, true, true, true)
+  );
+
+  const [prevParams, setPrevParams] = useState({
+    length,
+    includeUppercase,
+    includeLowercase,
+    includeNumbers,
+    includeSymbols,
   });
 
+  if (
+    prevParams.length !== length ||
+    prevParams.includeUppercase !== includeUppercase ||
+    prevParams.includeLowercase !== includeLowercase ||
+    prevParams.includeNumbers !== includeNumbers ||
+    prevParams.includeSymbols !== includeSymbols
+  ) {
+    setPrevParams({ length, includeUppercase, includeLowercase, includeNumbers, includeSymbols });
+    setPassword(
+      generatePasswordFromOptions(length, includeUppercase, includeLowercase, includeNumbers, includeSymbols)
+    );
+  }
+
   const generatePassword = () => {
-    let charSet = '';
-    if (includeUppercase) charSet += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (includeLowercase) charSet += 'abcdefghijklmnopqrstuvwxyz';
-    if (includeNumbers) charSet += '0123456789';
-    if (includeSymbols) charSet += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-
-    if (!charSet) {
-      setPassword('');
-      return;
-    }
-
-    let generated = '';
-    for (let i = 0; i < length; i++) {
-      generated += charSet.charAt(Math.floor(Math.random() * charSet.length));
-    }
-    setPassword(generated);
+    setPassword(
+      generatePasswordFromOptions(length, includeUppercase, includeLowercase, includeNumbers, includeSymbols)
+    );
   };
 
-  // Generate on mount and whenever options change
-  useEffect(() => {
-    generatePassword();
-  }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
-
-  // Calculate strength score
-  useEffect(() => {
+  // Calculate strength score dynamically using useMemo
+  const strength = useMemo(() => {
     if (!password) {
-      setStrength({
+      return {
         score: 0,
         label: 'Empty',
         color: 'bg-zinc-800',
         desc: 'Select options to generate a password.',
-      });
-      return;
+      };
     }
 
     let score = 0;
-    
-    // Add points for length
     if (length >= 8) score += 1;
     if (length >= 12) score += 1;
     if (length >= 16) score += 1;
 
-    // Add points for complexity
     let activeCategories = 0;
     if (includeUppercase) activeCategories++;
     if (includeLowercase) activeCategories++;
@@ -89,7 +103,7 @@ export default function PasswordGenerator() {
       desc = 'Decent strength. Consider adding more character types.';
     }
 
-    setStrength({ score, label, color, desc });
+    return { score, label, color, desc };
   }, [password, length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
 
   const handleCopy = () => {

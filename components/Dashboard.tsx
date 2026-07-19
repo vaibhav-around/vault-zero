@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
@@ -10,7 +10,6 @@ import {
   LogOut, 
   Lock, 
   Unlock,
-  Layers,
   Network,
   Loader2,
   Menu,
@@ -28,12 +27,22 @@ export default function Dashboard() {
     activeTab,
     isLocked,
     isConnecting,
+    theme,
     setActiveTab,
     disconnectWallet,
     unlockVaultWithSignature
   } = useVaultStore();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Sync theme class to document element on mount / state change
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+  }, [theme]);
 
   const handleUnlock = async () => {
     try {
@@ -262,7 +271,7 @@ export default function Dashboard() {
         
         {/* Top Header (Desktop) */}
         <header className="hidden md:flex h-16 w-full items-center justify-between border-b border-zinc-900 bg-zinc-950/30 px-8 backdrop-blur-md shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
               Session Status:
             </span>
@@ -274,6 +283,17 @@ export default function Dashboard() {
               {isLocked ? <Lock className="h-2.5 w-2.5" /> : <Unlock className="h-2.5 w-2.5" />}
               {isLocked ? 'Locked' : 'Unlocked'}
             </span>
+
+            {!isLocked && (
+              <button
+                onClick={() => useVaultStore.getState().lockVault()}
+                className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:bg-zinc-800 hover:text-rose-400 transition-colors"
+                title="Lock Vault (Clear key from memory)"
+              >
+                <Lock className="h-3 w-3" />
+                <span>Lock Vault</span>
+              </button>
+            )}
           </div>
 
           <div className="text-xs text-zinc-500 font-medium">
@@ -287,6 +307,7 @@ export default function Dashboard() {
             {isLocked ? (
               // Locked Wall
               <motion.div
+                key="locked"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
@@ -299,31 +320,23 @@ export default function Dashboard() {
                 <p className="max-w-md text-xs text-zinc-400 leading-relaxed mb-6 px-2 sm:px-0">
                   To decrypt your credentials, please authorize VaultZero key derivation by signing the challenge request with your connected Midnight wallet.
                 </p>
-
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  <button
-                    onClick={disconnectWallet}
-                    className="w-full sm:w-auto rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-3 text-xs font-semibold text-zinc-400 hover:bg-zinc-900"
-                  >
-                    Disconnect
-                  </button>
-                  <button
-                    onClick={handleUnlock}
-                    className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-6 py-3 text-xs font-semibold text-white shadow-lg hover:from-violet-500 hover:to-cyan-500 transition-all hover:scale-[1.02]"
-                  >
-                    {isConnecting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-                        <span>Signing challenge...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Unlock className="h-4 w-4" />
-                        <span>Approve Wallet Signature</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                <button
+                  onClick={handleUnlock}
+                  disabled={isConnecting}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 px-6 py-3 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-violet-500/20 hover:from-violet-500 hover:to-cyan-500 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Deriving Key...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Unlock className="h-4 w-4" />
+                      <span>Unlock Vault with Signature</span>
+                    </>
+                  )}
+                </button>
               </motion.div>
             ) : (
               // Unlocked Active View

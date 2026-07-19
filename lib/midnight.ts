@@ -1,5 +1,4 @@
-import { getCompiledContract, getLedger } from '../contract/src/index';
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface WalletInfo {
   address: string;
   publicKey: string;
@@ -56,7 +55,7 @@ class MidnightService {
 
   async isWalletAvailable(): Promise<boolean> {
     if (typeof window === 'undefined') return false;
-    const w = window as any;
+    const w = window as unknown as Record<string, unknown>;
     return !!(w.midnight || w.oneAm || w.lace);
   }
 

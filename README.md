@@ -46,17 +46,30 @@ Follow these simple steps to run VaultZero locally on your machine.
 
 - **Node.js**: `v18.x` or higher
 - **npm**: `v9.x` or higher
-- *(Optional)* **1am Wallet** Chrome Extension for live testnet wallet testing.
+- **Docker** *(Optional, if running local Midnight ZK Proof Server)*
+- **1am Wallet** Chrome Extension *(Optional, for live testnet testing)*
 
 ---
 
 ### Step 1: Clone & Install Dependencies
 
 ```bash
-git clone https://github.com/your-repo/password-manager.git
+git clone https://github.com/vaibhav-around/vault-zero.git
 cd password-manager
 npm install
 ```
+
+---
+
+### Step 2: (Optional) Run Midnight ZK Proof Server via Docker
+
+For full local ZK prover generation when interacting with local testnet nodes, you can start the official Midnight Proof Server container on port `6300`:
+
+```bash
+docker run -p 6300:6300 midnightntwrk/proof-server:3.0.0
+```
+
+> *Note: If Docker or the proof server is not running, VaultZero automatically uses browser-based ZK proving and simulated fallback mode so auditors can evaluate the application seamlessly.*
 
 ---
 

@@ -1,25 +1,25 @@
 # 🛡️ VaultZero — Decentralized Zero-Knowledge Password Manager
 
 > **Built for the Midnight Network Hackathon**  
-> *Own your passwords with military-grade client-side encryption and Midnight Zero-Knowledge proof anchoring.*
+> _Own your passwords with client-side AES-GCM-256 encryption and Midnight Zero-Knowledge proof state anchoring._
 
 ---
 
 ## 🌟 Overview
 
-**VaultZero** is a next-generation, privacy-first password manager leveraging the **Midnight Blockchain** and **Compact Smart Contracts**. 
+**VaultZero** is a next-generation, privacy-first password manager leveraging the **Midnight Blockchain** and **Compact Smart Contracts**.
 
-Unlike legacy password managers that rely on centralized cloud storage (vulnerable to data breaches), VaultZero guarantees that **your master credentials never leave your browser unencrypted**. By combining local **AES-GCM-256** encryption with **Midnight Zero-Knowledge (ZK) signatures** and on-chain state hash anchoring, VaultZero guarantees both absolute privacy and tamper-evident vault integrity.
+Unlike legacy password managers that rely on centralized cloud storage (vulnerable to data breaches), VaultZero guarantees that **your master credentials never leave your browser unencrypted**. By combining local **AES-GCM-256** encryption with **Wallet-derived signatures** and **Midnight Zero-Knowledge (ZK)** on-chain state hash anchoring, VaultZero provides client-side zero-leakage privacy and tamper-evident vault integrity.
 
 ---
 
 ## ✨ Key Features
 
-- **🔐 Zero-Knowledge Master Key Derivation**: Encryption keys are generated on-the-fly from cryptographic ZK signatures requested through your Midnight wallet. Master keys exist only in temporary React state memory and are wiped when locked.
-- **🛡️ Client-Side AES-GCM 256-bit Encryption**: All credential records (websites, usernames, passwords, notes) are encrypted inside your browser before saving.
-- **⛓️ Midnight On-Chain Integrity Anchoring**: State modifications (add, update, delete) compile SHA-256 ciphertext hashes and commit them to the Midnight ledger via ZK contract circuits.
+- **🔐 Wallet-Derived Cryptographic Master Key**: Encryption keys are generated on-the-fly from cryptographic signatures requested through your Midnight wallet (PBKDF2 + SHA-256, 100,000 iterations). Master keys exist only in temporary React state memory and are wiped when locked.
+- **🛡️ Client-Side AES-GCM 256-bit Encryption**: All credential records (websites, usernames, passwords, notes) are encrypted inside your browser before saving to local storage.
+- **⛓️ Midnight ZK State Anchoring**: State modifications (add, update, delete) compute SHA-256 ciphertext hashes and commit them to the Midnight ledger via Compact ZK contract circuits (`contract/src/board.compact`).
 - **💼 Dual Wallet Mode (Live + Simulated)**:
-  - **1am Wallet / Lace Extension**: Direct connection to native Midnight browser extensions (`window.midnight['1am']`).
+  - **1am Wallet Extension**: Direct connection to native Midnight browser extensions (`window.midnight['1am']`).
   - **Simulated Ledger Mode**: Built-in interactive sandbox allowing auditors and judges to instantly test full ZK flows without requiring testnet faucet tokens or extension setup.
 - **⚡ Full Vault Management**: Password generator, category filters (Personal, Work, Finance, Social), favorite bookmarks, vault export/import, and activity audit logging.
 
@@ -27,16 +27,41 @@ Unlike legacy password managers that rely on centralized cloud storage (vulnerab
 
 ## 🏗️ Architecture & Technology Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend Framework** | Next.js 16 (App Router), React 19, TypeScript |
-| **Styling & Motion** | Tailwind CSS v4, Framer Motion, Lucide Icons |
-| **State Management** | Zustand |
+| Layer                    | Technology                                                                   |
+| :----------------------- | :--------------------------------------------------------------------------- |
+| **Frontend Framework**   | Next.js 16 (App Router), React 19, TypeScript                                |
+| **Styling & Motion**     | Tailwind CSS v4, Framer Motion, Lucide Icons                                 |
+| **State Management**     | Zustand                                                                      |
 | **Blockchain / Privacy** | Midnight Network (`@midnight-ntwrk/compact-js`, `@midnight-ntwrk/ledger-v8`) |
-| **Smart Contract** | Compact Language (`contract/src/board.compact`) |
-| **Cryptography** | Web Crypto API (AES-GCM-256, PBKDF2), SHA-256 |
+| **Smart Contract**       | Compact Language (`contract/src/board.compact`)                              |
+| **Cryptography**         | Web Crypto API (AES-GCM-256, PBKDF2), SHA-256                                |
 
 ---
+
+## 📐 Architecture Diagram
+
+```
+                 User Browser
+                      │
+                      ▼
+            Connect Midnight Wallet
+                      │
+                      ▼
+          Sign Challenge Request
+                      │
+                      ▼
+      Derive AES-256 Key (PBKDF2 100k)
+                      │
+                      ▼
+          Encrypt Vault (AES-GCM-256)
+                      │
+                      ▼
+            Generate SHA-256 Hash
+             │                  │
+             ▼                  ▼
+     Encrypted Vault     Midnight ZK Contract
+     (Local Storage)    (Integrity Anchor)
+```
 
 ## 🚀 Quick Start Guide for Auditors & Judges
 
@@ -46,8 +71,8 @@ Follow these simple steps to run VaultZero locally on your machine.
 
 - **Node.js**: `v18.x` or higher
 - **npm**: `v9.x` or higher
-- **Docker** *(Optional, if running local Midnight ZK Proof Server)*
-- **1am Wallet** Chrome Extension *(Optional, for live testnet testing)*
+- **Docker** _(Optional, if running local Midnight ZK Proof Server)_
+- **1am Wallet** Chrome Extension _(Optional, for live testnet testing)_
 
 ---
 
@@ -69,11 +94,11 @@ For full local ZK prover generation when interacting with local testnet nodes, y
 docker run -p 6300:6300 midnightntwrk/proof-server:3.0.0
 ```
 
-> *Note: If Docker or the proof server is not running, VaultZero automatically uses browser-based ZK proving and simulated fallback mode so auditors can evaluate the application seamlessly.*
+> _Note: If Docker or the proof server is not running, VaultZero automatically uses browser-based ZK proving and simulated fallback mode so auditors can evaluate the application seamlessly._
 
 ---
 
-### Step 2: Launch Development Server
+### Step 3: Launch Development Server
 
 ```bash
 npm run dev
@@ -83,17 +108,19 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-### Step 3: Auditor Testing Instructions
+### Step 4: Auditor Testing Instructions
 
 #### Option A: Instant Evaluation (Simulated Mode - Recommended for Quick Review)
+
 1. On the landing page, click **Connect Midnight Wallet**.
 2. Click **Unlock Vault** — the app will simulate ZK signature proof generation and grant access to the vault dashboard.
 3. Test adding a credential, editing, or generating passwords.
 4. Observe the **Midnight Ledger Activity Log** updating with live simulated ZK transaction proofs.
 
 #### Option B: Live 1am Wallet Testing (Testnet Review)
+
 1. Ensure your **1am Wallet** browser extension is unlocked.
-2. Ensure extension permissions allow access to `http://localhost:3000` (click puzzle icon 🧩 -> 1am Wallet -> *This Can Read and Change Site Data* -> *On All Sites*).
+2. Ensure extension permissions allow access to `http://localhost:3000` (click puzzle icon 🧩 -> 1am Wallet -> _This Can Read and Change Site Data_ -> _On All Sites_).
 3. Click **Connect Midnight Wallet** on VaultZero.
 4. Approve the connection popup in your 1am Wallet extension.
 5. Your real Midnight testnet address (`nc1q...`) and tDUST balance will load into the application!

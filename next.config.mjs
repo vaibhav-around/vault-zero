@@ -2,6 +2,7 @@
 import { join } from 'node:path';
 
 const nextConfig = {
+  turbopack: {},
   async headers() {
     return [
       {
